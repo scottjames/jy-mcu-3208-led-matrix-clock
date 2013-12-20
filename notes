@@ -1,0 +1,82 @@
+
+http://club.dx.com/forums/forums.dx/threadid.1118199?page=1
+
+
+Basically, first step is to get an ISP programmer.
+I got the "POLOLU USB AVR PROGRAMMER".
+
+With the programmer unplugged from the computer, and the clock unplugged from external power, plug the programmer into the pins on the side of the clock.
+
+Just connect the pins labeled the same together. eg: MOSI -> MOSI, VDD/VCC -> VCC, SCK -> SCK, etc...
+
+Now, connect the external power to the clock. It should start up as normal, and show the clock on the screen. If its not showing, you plugged in the programmer in wrong and might be shorting something. Unplug it and check the pinouts more carefully.
+
+Now connect the USB into the programmer. The programmer should now light up.
+
+When you plug it into the computer, use "dmesg | tail" to find the name of the device that the programmer will show up on your machine as. For me it was "/dev/ttyAMC0".
+There was also AMC1, but that is the serial port on my programmer.
+
+Now to verify that everything is connected and working properly, run avrdude.
+
+avrdude -c avrisp2 -p m8 -P /dev/ttyACM0
+
+-c is the programmer protocol you use for your programmer. Again, I am using the Pololu USB AVR Programmer, and it uses avrisp2.
+-p is the chip that you are programming. This clock has an MEGA 8 chip, its code in avrdude is "m8".
+-P is the port of your programmer on your computer. Again, for me this was ttyAMC0.
+
+When you run this command it should just verify the chip and the connections.
+It should show something like this:
+
+avrdude: AVR device initialized and ready to accept instructions
+Reading | ################################################## | 100% 0.00s
+avrdude: Device signature = 0x1e9307
+avrdude: safemode: Fuses OK
+avrdude done. Thank you.
+
+Now that you have a working programmer, we should back up the existing program on the clock.
+For this, we use the -U command.
+
+avrdude -c avrisp2 -p m8 -P /dev/ttyACM0 -U flash:r:original.hex:i
+
+its -U type:operation:filename:format
+type: could be flash, eeprom, (h|l|e)fuse. We want to back up the flash.
+operation: r|w|v, read, write, verify. We want read to get the hex off the chip.
+filename: where we want to write it to
+format: we want intel hex. So "i".
+
+Now we need to compile the program from DrJones.
+
+To do this, we will use avr-gcc and avr-objcopy.
+
+avr-gcc -Os -std=c99 -mmcu=atmega8 -o clock.elf clockmtx.c
+
+-Os: turn on optimisation, and target smallest file size.
+-std: the standard of the C code. In this case he is using c99 (for his for loops).
+-mmcu: the chip to compile for. gcc calls this chip "atmega8".
+-o: Tell GCC to link and write out to the file clock.elf.
+
+Now, we need to make an intel hex file from this, using avr-objcopy.
+
+avr-objcopy -O ihex clock.elf clock.hex
+
+-O: tell it to write in intel hex format "ihex".
+
+Finally, we want to flash it on the chip :)
+
+avrdude -c avrisp2 -p m8 -P /dev/ttyACM0 -U flash:w:clock.hex:i
+
+this time we tell it (with the -U command) to write with the "w" option the .hex file to the flash memory of the chip.
+
+Now the clock should should be running the new program that DrJones has written :)
+
+I hope this helps.
+
+If there is something wrong with what I did, please tell me :)
+Posts(60) | Reviews | Tip post
+
+
+
+use 'sudo' to write usb port with ubunutu....
+
+sudo avrdude  -p m8  -c usbtiny -U flash:w:clockmtx.hex:i
+

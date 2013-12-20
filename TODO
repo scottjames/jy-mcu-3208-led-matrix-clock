@@ -1,0 +1,8 @@
+
+fix '1' digit...remove a dot from lower left edge of base -- looks too wide.
+
+fix second progressive display.  maybe use scrolling dot from top->bottom instead of growing bar?
+
+make flashing colon smaller -- instead of 4 dots for top/bottom use 1 dot -- lower profile.
+
+
